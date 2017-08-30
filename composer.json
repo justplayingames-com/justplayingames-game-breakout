@@ -1,0 +1,17 @@
+{
+    "name": "justplayingames/game-breakout",
+    "description": "Breakout game on justplayingames.com",
+    "keywords": ["game", "justplayingames", "laravel", "phaserjs"],
+    "license": "BSD 3-clause",
+    "authors": [
+        {
+            "name": "Just Playin",
+            "email": "jp@justplayingames.com"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "JustPlayinGames\\Games\\Breakout\\": "src/"
+        }
+    }
+}
