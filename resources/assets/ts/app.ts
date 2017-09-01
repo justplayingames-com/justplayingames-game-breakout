@@ -1,54 +1,273 @@
 ///<reference path="../../../node_modules/phaser-ce/typescript/phaser.d.ts" />
 
 
-var game = new Phaser.Game(800, 600, Phaser.AUTO, 'phaser-example', { preload: preload, create: create, update: update });
+var game = new Phaser.Game(
+    360, 
+    640, 
+    Phaser.AUTO, 
+    'game', 
+    { preload: preload, create: create, update: update }
+);
+
+
+var WebFontConfig = {
+
+    //  'active' means all requested fonts have finished loading
+    //  We set a 1 second delay before calling 'createText'.
+    //  For some reason if we don't the browser cannot render the text the first time it's created.
+    active: function() { game.time.events.add(Phaser.Timer.SECOND, create, this); },
+
+    //  The Google Fonts we want to load (specify as many as you like in the array)
+    google: {
+        families: ['Luckiest Guy', 'Lobster']
+    }
+
+};
 
 function preload() {
+    game.load.baseURL = 'http://192.168.1.6:8000/assets/games/breakout/';
 
-    game.load.atlas('breakout', 'assets/games/breakout/atlas/breakout.png', 'assets/games/breakout/atlas/breakout.json');
-    game.load.image('starfield', 'assets/games/breakout/img/starfield.jpg');
-
+    game.load.atlas('breakout', 'atlas/breakout.png', 'atlas/breakout.json');
+    game.load.image('starfield', 'img/starfield.png');
 }
 
 var ball;
 var paddle;
 var bricks;
+var background = {
+    sprite: null,
+    filter: null
+};
 
 var ballOnPaddle = true;
 
 var lives = 3;
 var score = 0;
 
+var titleText;
 var scoreText;
 var livesText;
 var introText;
 
+var update_tick = 0;
+
 var s;
 
+var levels = [
+    {
+        ball: {
+            velocity: {
+                y: -200
+            }
+        },
+
+        bricks: {
+            rows: 1,
+            columns: 6,
+            origin: {
+                x: 78,
+                y: 200
+            },
+            offset: {
+                x: 34,
+                y: 52
+            }
+        }
+    },
+
+    {
+        ball: {
+            velocity: {
+                y: -200
+            }
+        },
+
+        bricks: {
+            rows: 2,
+            columns: 10,
+            origin: {
+                x: 10,
+                y: 200
+            },
+            offset: {
+                x: 34,
+                y: 52
+            }
+        }
+    },
+
+    {
+        ball: {
+            velocity: {
+                y: -250
+            }
+        },
+
+        bricks: {
+            rows: 2,
+            columns: 10,
+            origin: {
+                x: 10,
+                y: 200
+            },
+            offset: {
+                x: 34,
+                y: 52
+            }
+        }
+    },
+
+    {
+        ball: {
+            velocity: {
+                y: -250
+            }
+        },
+
+        bricks: {
+            rows: 3,
+            columns: 10,
+            origin: {
+                x: 10,
+                y: 200
+            },
+            offset: {
+                x: 34,
+                y: 52
+            }
+        }
+    },
+
+    {
+        ball: {
+            velocity: {
+                y: -250
+            }
+        },
+
+        bricks: {
+            rows: 4,
+            columns: 10,
+            origin: {
+                x: 10,
+                y: 200
+            },
+            offset: {
+                x: 34,
+                y: 52
+            }
+        }
+    },
+
+    {
+        ball: {
+            velocity: {
+                y: -300
+            }
+        },
+
+        bricks: {
+            rows: 4,
+            columns: 10,
+            origin: {
+                x: 10,
+                y: 200
+            },
+            offset: {
+                x: 34,
+                y: 52
+            }
+        }
+    },
+
+    {
+        ball: {
+            velocity: {
+                y: -300
+            }
+        },
+
+        bricks: {
+            rows: 5,
+            columns: 10,
+            origin: {
+                x: 10,
+                y: 200
+            },
+            offset: {
+                x: 34,
+                y: 52
+            }
+        }
+    },
+
+   {
+        ball: {
+            velocity: {
+                y: -300
+            }
+        },
+
+        bricks: {
+            rows: 6,
+            columns: 10,
+            origin: {
+                x: 10,
+                y: 200
+            },
+            offset: {
+                x: 34,
+                y: 52
+            }
+        }
+    },
+];
+
+
+var level_i = 0;
+var level = null;
+
+function createBricks() {
+    var brick;
+
+    for (var y = 0; y < level.bricks.rows; y++)
+    {
+        for (var x = 0; x < level.bricks.columns; x++)
+        {
+            var png = 'brick_' + ((y % 4) + 1) + '_1.png'
+
+            brick = bricks.create(
+                level.bricks.origin.x + (x * level.bricks.offset.x), 
+                level.bricks.origin.y + (y * level.bricks.offset.y), 
+                'breakout', png
+            );
+
+            brick.body.bounce.set(1);
+            brick.body.immovable = true;
+        }
+    }
+}
+
+
 function create() {
+
+    level = levels[level_i];
 
     game.physics.startSystem(Phaser.Physics.ARCADE);
 
     //  We check bounds collisions against all walls other than the bottom one
     game.physics.arcade.checkCollision.down = false;
 
-    s = game.add.tileSprite(0, 0, 800, 600, 'starfield');
+    background.sprite = game.add.tileSprite(
+        0, 0, 360, 640, 
+        'starfield'
+    );
 
     bricks = game.add.group();
     bricks.enableBody = true;
     bricks.physicsBodyType = Phaser.Physics.ARCADE;
 
-    var brick;
-
-    for (var y = 0; y < 4; y++)
-    {
-        for (var x = 0; x < 15; x++)
-        {
-            brick = bricks.create(120 + (x * 36), 100 + (y * 52), 'breakout', 'brick_' + (y+1) + '_1.png');
-            brick.body.bounce.set(1);
-            brick.body.immovable = true;
-        }
-    }
+    createBricks();
 
     paddle = game.add.sprite(game.world.centerX, 500, 'breakout', 'paddle_big.png');
     paddle.anchor.setTo(0.5, 0.5);
@@ -72,14 +291,27 @@ function create() {
 
     ball.events.onOutOfBounds.add(ballLost, this);
 
-    scoreText = game.add.text(32, 550, 'score: 0', { font: "20px Arial", fill: "#ffffff", align: "left" });
-    livesText = game.add.text(680, 550, 'lives: 3', { font: "20px Arial", fill: "#ffffff", align: "left" });
-    introText = game.add.text(game.world.centerX, 400, '- click to start -', { font: "40px Arial", fill: "#ffffff", align: "center" });
+    titleText = game.add.text(0, 0, 'Breakout', {font: "54px monospace"});
+    var grd = titleText.context.createLinearGradient(0, 0, 0, titleText.canvas.height);
+    grd.addColorStop(0, '#FFF');
+    grd.addColorStop(1, '#0F0');
+    titleText.fill = grd;
+
+    titleText.align = 'center';
+    titleText.stroke = '#000000';
+    titleText.strokeThickness = 2;
+    titleText.setShadow(5, 5, 'rgba(0,0,0,0.5)', 5);
+
+
+    scoreText = game.add.text(180, 54, 'score: 0', { font: "20px monospace", fill: "#0f0", align: "left" });
+    livesText = game.add.text(0, 54, 'lives: 3', { font: "20px monospace", fill: "#0f0", align: "left" });
+    introText = game.add.text(game.world.centerX, 400, 'click to start', { font: "40px monospace", fill: "#ffffff", align: "center" });
     introText.anchor.setTo(0.5, 0.5);
 
     game.input.onDown.add(releaseBall, this);
 
 }
+
 
 function update () {
 
@@ -114,7 +346,7 @@ function releaseBall () {
     if (ballOnPaddle)
     {
         ballOnPaddle = false;
-        ball.body.velocity.y = -300;
+        ball.body.velocity.y = level.ball.velocity.y;
         ball.body.velocity.x = -75;
         ball.animations.play('spin');
         introText.visible = false;
@@ -163,9 +395,18 @@ function ballHitBrick (_ball, _brick) {
     if (bricks.countLiving() == 0)
     {
         //  New level starts
+        level_i = level_i + 1;
+        if (level_i >= levels.length)
+        {
+            level_i = 0;
+        }
+
+        level = levels[level_i];
+
         score += 1000;
         scoreText.text = 'score: ' + score;
-        introText.text = '- Next Level -';
+        introText.text = 'Level ' + level_i;
+        introText.visible = true;
 
         //  Let's move the ball back to the paddle
         ballOnPaddle = true;
@@ -174,8 +415,9 @@ function ballHitBrick (_ball, _brick) {
         ball.y = paddle.y - 16;
         ball.animations.stop();
 
-        //  And bring the bricks back from the dead :)
-        bricks.callAll('revive');
+        //  create new bricks
+        bricks.removeAll(true);
+        createBricks();
     }
 
 }
