@@ -22,8 +22,7 @@ export default class Paddle {
         this.sprite.body.immovable = true;
     }
 
-    input(game: Phaser.Game)
-    {
+    input(game: Phaser.Game) {
         var x = game.input.x;
 
         if (x == this.inputX) {
@@ -33,15 +32,13 @@ export default class Paddle {
             this.inputX = x;
         }
 
-        if (x < 24)
-        {
+        if (x < 24) {
             x = 24;
         }
-        else if (x > game.width - 24)
-        {
+        else if (x > game.width - 24) {
             x = game.width - 24;
         }
-        
+
         var d = Math.abs(x - this.sprite.x);
         var t = d / this.speed * 1000;
 
@@ -50,10 +47,10 @@ export default class Paddle {
             this.tween = null;
         }
 
-        this.tween = game.add.tween(this.sprite).to( 
-            {x: x, y: this.sprite.y}, 
-            t, 
-            Phaser.Easing.Default, 
+        this.tween = game.add.tween(this.sprite).to(
+            { x: x, y: this.sprite.y },
+            t,
+            Phaser.Easing.Default,
             true
         );
     }

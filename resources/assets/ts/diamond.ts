@@ -12,8 +12,8 @@ export default class Diamond {
 
     addToGroup(group: Phaser.Group, brick: Brick) {
         this.sprite = group.create(
-            brick.sprite.centerX, 
-            brick.sprite.y, 
+            brick.sprite.centerX,
+            brick.sprite.y,
             'diamond'
         );
 
