@@ -43,11 +43,21 @@ export default class Ball {
             this.sprite.animations.play('spin');
         }
         else {
-            this.sprite.animations.stop('spin');
+            this.sprite.animations.stop();
         }
     }
 
-    stop() {
+    stop(x: number | null = null, y: number | null = null) {
         this.velocity = new Phaser.Point(0, 0);
+
+        if (x === null) {
+            x = this.sprite.x
+        }
+
+        if (y === null) {
+            y = this.sprite.y
+        }
+
+        this.sprite.reset(x, y);
     }
 }

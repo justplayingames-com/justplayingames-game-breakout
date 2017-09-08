@@ -68,11 +68,19 @@ export default class PlayState {
         this.bricks.createBricks(this.data.level);
 
         this.rewards.addToGame(game);
-        this.rewards.createRewards(this.data.level, this.bricks);
+        this.rewards.createRewards(
+            this.data.level,
+            this.bricks,
+            (this.rewardLost).bind(this)
+        );
 
         this.ball.sprite.body.onWorldBounds.add(this.ballHitWorldBounds, this);
         this.ball.sprite.events.onOutOfBounds.add(this.ballLost, this);
+
         game.input.onDown.add(this.releaseBall, this);
+
+        this.scoreboard.bricks = this.bricks;
+        this.scoreboard.rewards = this.rewards;
     }
 
 
@@ -106,29 +114,31 @@ export default class PlayState {
     ballLost() {
 
         this.data.lives--;
-        this.scoreboard.livesText.text = 'lives: ' + this.data.lives;
+        this.scoreboard.lives = this.data.lives;
 
         if (this.data.lives === 0) {
             this.gameOver();
         }
         else {
             this.data.bonus = 0;
-            this.scoreboard.bonusText.text = 'bonus: ' + this.data.bonus;
+            this.scoreboard.bonus = this.data.bonus;
 
             this.ballOnPaddle = true;
 
-            this.ball.sprite.reset(
+            this.ball.stop(
                 this.paddle.sprite.body.x + 16,
-                this.paddle.sprite.y - 16);
+                this.paddle.sprite.y - 16
+            );
 
             this.ball.sprite.animations.stop();
         }
     }
 
-    rewardLost(_sprite) {
-        _sprite.kill();
-    }
+    rewardLost() {
+        console.log('rewardLost')
 
+        this.scoreboard.rewards = this.rewards;
+    }
 
     gameOver() {
         this.ball.stop();
@@ -139,7 +149,7 @@ export default class PlayState {
 
     ballHitWorldBounds(_ball_sprite) {
         this.data.bonus += 1;
-        this.scoreboard.bonusText.text = 'bonus: ' + this.data.bonus;
+        this.scoreboard.bonus = this.data.bonus;
     }
 
     ballHitBrick(_ball_sprite, _brick_sprite) {
@@ -150,9 +160,9 @@ export default class PlayState {
         this.data.score += this.data.bonus;
         this.data.bonus = 0;
 
-        this.scoreboard.scoreText.text = 'score: ' + this.data.score;
-        this.scoreboard.bonusText.text = 'bonus: ' + this.data.bonus;
-
+        this.scoreboard.score = this.data.score;
+        this.scoreboard.bonus = this.data.bonus;
+        this.scoreboard.bricks = this.bricks;
 
         if (this.isLevelOver()) {
             this.nextLevel();
@@ -169,28 +179,35 @@ export default class PlayState {
         this.data.levelManager.nextLevel();
 
         this.data.score += 1000;
-        this.scoreboard.scoreText.text = 'score: ' + this.data.score;
+        this.scoreboard.score = this.data.score;
         this.scoreboard.introText.text = 'Level ' + this.data.levelNumber;
         this.scoreboard.introText.visible = true;
 
         //  Let's move the ball back to the paddle.sprite
         this.ballOnPaddle = true;
-        this.ball.sprite.body.velocity.set(0);
-        this.ball.sprite.x = this.paddle.sprite.x + 16;
-        this.ball.sprite.y = this.paddle.sprite.y - 16;
-        this.ball.sprite.animations.stop();
+        this.ball.stop(
+            this.paddle.sprite.x + 16,
+            this.paddle.sprite.y - 16
+        );
 
         //  create new bricks
         this.bricks.createBricks(this.data.level);
 
         // create new rewards
-        this.rewards.createRewards(this.data.level, this.bricks);
+        this.rewards.createRewards(
+            this.data.level,
+            this.bricks,
+            (this.rewardLost).bind(this)
+        );
+
+        this.scoreboard.bricks = this.bricks;
+        this.scoreboard.rewards = this.rewards;
     }
 
     ballHitPaddle(_ball_sprite, _paddle_sprite) {
 
         this.data.bonus = 0;
-        this.scoreboard.bonusText.text = 'bonus: ' + this.data.bonus;
+        this.scoreboard.bonus = this.data.bonus;
 
         var diff = 0;
 
@@ -213,10 +230,10 @@ export default class PlayState {
 
     rewardHitPaddle(_paddle_sprite, _reward_sprite) {
         _reward_sprite.kill();
+        _reward_sprite.data.diamond.updateGameData(this.data);
 
-        this.data.score += 100;
-
-        this.scoreboard.scoreText.text = 'score: ' + this.data.score;
+        this.scoreboard.data = this.data;
+        this.scoreboard.rewards = this.rewards;
 
         if (this.isLevelOver()) {
             this.nextLevel();
